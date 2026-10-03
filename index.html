@@ -233,7 +233,7 @@
     <div id="stage-title" style="font-size: 1.15rem; font-weight: 900; color: #1e3a8a; margin-bottom: 10px;"></div>
     <div id="stage-content"></div>
 
-    <button class="btn-3d btn-blue" onclick="checkStage()" style="margin-top: 14px;">MỞ KHÓA MẬT THƯ</button>
+    <button id="btn-submit-stage" class="btn-3d btn-blue" onclick="checkStage()" style="margin-top: 14px;">MỞ KHÓA MẬT THƯ 1</button>
     <div id="feedback" class="msg-feedback"></div>
 
     <div class="badge-bar">
@@ -299,7 +299,7 @@
     <div style="padding: 16px; text-align: center; background: #000000;">
       <img src="so-do-bi-an.jpg" alt="Sơ đồ cơ chế miễn dịch bí ẩn" style="max-width: 100%; height: auto; max-height: 60vh; border-radius: 12px; object-fit: contain;">
       <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px; font-weight: 700;">
-        💡 Gợi ý: Quan sát kỹ hình dạng vi khuẩn, tế bào lympho B hoạt hóa, tế bào nhớ và tương bào tiết kháng thể.
+        💡 Gợi ý: Quan sát kỹ hình dạng vi sinh vật, tế bào lympho B hoạt hóa, tế bào nhớ và tương bào tiết kháng thể.
       </div>
     </div>
     <div style="padding: 10px 16px; background: #0f172a; text-align: right; border-top: 1px solid #1e293b;">
@@ -346,7 +346,7 @@
   const SCRIPT_URL = "URL_APPS_SCRIPT_CUA_BAN";
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit";
 
-  // ================= HỆ THỐNG ÂM THANH TỰ ĐỘNG (WEB AUDIO API) =================
+  // ================= HỆ THỐNG ÂM THANH (WEB AUDIO API) =================
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -358,7 +358,6 @@
     return audioCtx;
   }
 
-  // Tiếng Ting Ting khi giải đúng từng mật thư
   function playCorrectSound() {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -376,7 +375,6 @@
     });
   }
 
-  // Tiếng Buzz nhẹ khi làm sai
   function playWrongSound() {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -393,45 +391,39 @@
     osc.stop(now + 0.25);
   }
 
-  // Tiếng Pháo Nổ + Tiếng Vỗ Tay chúc mừng khi về đích!
+  // Âm thanh Chiến thắng: Nhạc khải hoàn (Fanfare) + Tiếng vỗ tay ròn rã
   function playCelebrationSound() {
     const ctx = getAudioContext();
-    
-    // 1. Chuỗi pháo nổ "Pằng... Tách... Bùm!"
-    for (let i = 0; i < 6; i++) {
-      const delay = i * 0.35 + Math.random() * 0.15;
+    const now = ctx.currentTime;
+
+    // Giai điệu kèn chiến thắng
+    const notes = [
+      { f: 523.25, d: 0.15 },
+      { f: 659.25, d: 0.15 },
+      { f: 783.99, d: 0.15 },
+      { f: 1046.50, d: 0.45 }
+    ];
+    let offset = 0;
+    notes.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(n.f, now + offset);
+      gain.gain.setValueAtTime(0.25, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + n.d);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + n.d);
+      offset += n.d * 0.85;
+    });
+
+    // Tiếng Vỗ Tay nồng nhiệt (Clapping effect)
+    for (let c = 0; c < 35; c++) {
+      const clapDelay = 0.35 + Math.random() * 2.5;
       setTimeout(() => {
-        const now = ctx.currentTime;
-        const bufferSize = ctx.sampleRate * 0.25;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let j = 0; j < bufferSize; j++) {
-          data[j] = Math.random() * 2 - 1;
-        }
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, now);
-        filter.frequency.exponentialRampToValueAtTime(80, now + 0.2);
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        noise.start(now);
-      }, delay * 1000);
-    }
-
-    // 2. Tiếng Vỗ Tay rào rào (Clapping sound effect)
-    for (let c = 0; c < 28; c++) {
-      const clapDelay = 0.2 + Math.random() * 2.2;
-      setTimeout(() => {
-        const now = ctx.currentTime;
-        const bufferSize = ctx.sampleRate * 0.05;
+        const t = ctx.currentTime;
+        const bufferSize = ctx.sampleRate * 0.04;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let j = 0; j < bufferSize; j++) {
@@ -441,17 +433,17 @@
         noise.buffer = buffer;
         const filter = ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1100 + Math.random() * 400, now);
-        filter.Q.value = 3.0;
+        filter.frequency.setValueAtTime(1000 + Math.random() * 500, t);
+        filter.Q.value = 2.5;
 
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
 
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(ctx.destination);
-        noise.start(now);
+        noise.start(t);
       }, clapDelay * 1000);
     }
   }
@@ -465,6 +457,7 @@
   let correctCount = 0;
   let wrongCount = 0;
   let collectedLetters = [];
+  let stage3VaccinePassed = false; // Đánh dấu đã qua bước điền từ định nghĩa vaccine
 
   const EVENTS = [
     { key: "A", text: "A. Tương bào tiết ra kháng thể, còn tế bào nhớ lưu giữ thông tin kháng nguyên." },
@@ -479,7 +472,7 @@
     teamName = document.getElementById("team-name").value.trim();
     if (!teamName) return alert("Vui lòng nhập tên nhóm của bạn!");
 
-    getAudioContext(); // Khởi tạo âm thanh từ tương tác người dùng
+    getAudioContext();
 
     document.getElementById("start-screen").style.display = "none";
     document.getElementById("game-screen").style.display = "block";
@@ -497,11 +490,13 @@
     const badgeEl = document.getElementById("stage-badge");
     const titleEl = document.getElementById("stage-title");
     const contentEl = document.getElementById("stage-content");
+    const btnSubmit = document.getElementById("btn-submit-stage");
     document.getElementById("feedback").innerText = "";
 
     badgeEl.innerText = `MẬT THƯ ${currentStage} / 3`;
 
     if (currentStage === 1) {
+      btnSubmit.innerText = "MỞ KHÓA MẬT THƯ 1";
       titleEl.innerText = "Mật thư 1: Nhận diện kẻ lạ (10 điểm)";
       contentEl.innerHTML = `
         <div class="content-box">
@@ -543,25 +538,24 @@
 
         <div class="content-box">
           <b>2. Quy luật tương tác:</b><br>
+          <!-- HÌNH VECTOR ĐÃ XÓA DÒNG CHỮ CHÚ THÍCH -->
           <div style="text-align: center; margin: 10px 0;">
-            <svg viewBox="0 0 460 150" style="max-width: 100%; height: auto; max-height: 140px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; padding: 4px;">
-              <path d="M 40,75 L 85,75 L 115,50 L 125,58 L 98,82 L 125,106 L 115,114 L 85,89 L 40,89 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
-              <polygon points="125,58 138,54 134,67" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
-              <circle cx="180" cy="82" r="38" fill="#f43f5e" stroke="#be123c" stroke-width="2"/>
-              <polygon points="144,82 154,73 154,91" fill="#ffffff" stroke="#be123c" stroke-width="2"/>
-              <text x="75" y="32" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#dc2626">Kháng thể A</text>
-              <text x="180" y="80" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
-              <text x="180" y="94" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN A</text>
+            <svg viewBox="0 0 460 135" style="max-width: 100%; height: auto; max-height: 130px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; padding: 4px;">
+              <path d="M 40,65 L 85,65 L 115,40 L 125,48 L 98,72 L 125,96 L 115,104 L 85,79 L 40,79 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+              <polygon points="125,48 138,44 134,57" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+              <circle cx="180" cy="72" r="38" fill="#f43f5e" stroke="#be123c" stroke-width="2"/>
+              <polygon points="144,72 154,63 154,81" fill="#ffffff" stroke="#be123c" stroke-width="2"/>
+              <text x="75" y="24" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#dc2626">Kháng thể A</text>
+              <text x="180" y="70" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
+              <text x="180" y="84" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN A</text>
 
-              <path d="M 270,75 L 315,75 L 345,50 L 355,58 L 328,82 L 355,106 L 345,114 L 315,89 L 270,89 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
-              <path d="M 355,58 A 6,6 0 1,1 362,50" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
-              <circle cx="410" cy="82" r="38" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
-              <circle cx="374" cy="82" r="8" fill="#ffffff" stroke="#0369a1" stroke-width="2"/>
-              <text x="305" y="32" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#2563eb">Kháng thể B</text>
-              <text x="412" y="80" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
-              <text x="412" y="94" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN B</text>
-              
-              <text x="230" y="142" font-family="'Nunito', sans-serif" font-style="italic" font-weight="700" font-size="12" fill="#64748b" text-anchor="middle">Cơ chế đặc hiệu: Chìa khóa - Ổ khóa</text>
+              <path d="M 270,65 L 315,65 L 345,40 L 355,48 L 328,72 L 355,96 L 345,104 L 315,79 L 270,79 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+              <path d="M 355,48 A 6,6 0 1,1 362,40" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+              <circle cx="410" cy="72" r="38" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+              <circle cx="374" cy="72" r="8" fill="#ffffff" stroke="#0369a1" stroke-width="2"/>
+              <text x="305" y="24" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#2563eb">Kháng thể B</text>
+              <text x="412" y="70" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
+              <text x="412" y="84" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN B</text>
             </svg>
           </div>
           Kháng nguyên liên kết đặc hiệu với kháng thể theo cơ chế 
@@ -570,6 +564,7 @@
       `;
     } 
     else if (currentStage === 2) {
+      btnSubmit.innerText = "MỞ KHÓA MẬT THƯ 2";
       selectedOrder = [];
       titleEl.innerText = "Mật thư 2: Sơ đồ dòng đời miễn dịch (10 điểm)";
       contentEl.innerHTML = `
@@ -596,38 +591,43 @@
       `;
     } 
     else if (currentStage === 3) {
-      if (!collectedLetters.includes("C") || collectedLetters.filter(x => x === "I").length < 2) {
-        collectedLetters = collectedLetters.concat(["C", "I"]);
-        document.getElementById("collected-badges").innerHTML = collectedLetters.map(l => `<span class="letter-chip">${l}</span>`).join(" ");
-      }
-
       titleEl.innerText = "Mật thư 3: Lá chắn Vaccine & Từ khóa (10 điểm)";
-      contentEl.innerHTML = `
-        <div class="content-box">
-          <div style="text-align: center; margin-bottom: 12px;">
-            <img src="vaccine-cute.png" alt="Lá chắn Vaccine" style="max-width: 100%; height: auto; max-height: 140px; border-radius: 16px; object-fit: contain; background: #fff; padding: 4px; border: 2px solid #fed7aa; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);">
+      
+      if (!stage3VaccinePassed) {
+        btnSubmit.innerText = "MỞ KHÓA MẢNH GHÉP CUỐI";
+        contentEl.innerHTML = `
+          <div class="content-box">
+            <div style="text-align: center; margin-bottom: 12px;">
+              <img src="vaccine-cute.png" alt="Lá chắn Vaccine" style="max-width: 100%; height: auto; max-height: 140px; border-radius: 16px; object-fit: contain; background: #fff; padding: 4px; border: 2px solid #fed7aa; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);">
+            </div>
+
+            <b>1. Điền từ thích hợp vào định nghĩa vaccine:</b><br>
+            <i>(Chạm từ ở kho từ bên dưới để điền, chạm ô trống để bỏ chọn)</i><br><br>
+            Vaccine là chế phẩm chứa một lượng rất nhỏ <span class="blank-drop" id="b1" onclick="clearBlank('b1')">...</span> 
+            của mầm bệnh đã được làm <span class="blank-drop" id="b2" onclick="clearBlank('b2')">...</span> 
+            hoặc <span class="blank-drop" id="b3" onclick="clearBlank('b3')">...</span>,... giúp kích thích cơ thể tạo kháng thể và ghi nhớ miễn dịch.
+
+            <div class="word-bank">
+              <span class="word-item" onclick="fillWord(this, 'kháng nguyên')">kháng nguyên</span>
+              <span class="word-item" onclick="fillWord(this, 'suy yếu')">suy yếu</span>
+              <span class="word-item" onclick="fillWord(this, 'bất hoạt')">bất hoạt</span>
+              <span class="word-item" onclick="fillWord(this, 'kháng thể')">kháng thể</span>
+              <span class="word-item" onclick="fillWord(this, 'chữa bệnh')">chữa bệnh</span>
+            </div>
           </div>
-
-          <b>1. Điền từ thích hợp vào định nghĩa vaccine:</b><br>
-          <i>(Chạm từ ở kho từ bên dưới để điền, chạm ô trống để bỏ chọn)</i><br><br>
-          Vaccine là chế phẩm chứa một lượng rất nhỏ <span class="blank-drop" id="b1" onclick="clearBlank('b1')">...</span> 
-          của mầm bệnh đã được làm <span class="blank-drop" id="b2" onclick="clearBlank('b2')">...</span> 
-          hoặc <span class="blank-drop" id="b3" onclick="clearBlank('b3')">...</span>,... giúp kích thích cơ thể tạo kháng thể và ghi nhớ miễn dịch.
-
-          <div class="word-bank">
-            <span class="word-item" onclick="fillWord(this, 'kháng nguyên')">kháng nguyên</span>
-            <span class="word-item" onclick="fillWord(this, 'suy yếu')">suy yếu</span>
-            <span class="word-item" onclick="fillWord(this, 'bất hoạt')">bất hoạt</span>
-            <span class="word-item" onclick="fillWord(this, 'kháng thể')">kháng thể</span>
-            <span class="word-item" onclick="fillWord(this, 'chữa bệnh')">chữa bệnh</span>
+        `;
+      } else {
+        btnSubmit.innerText = "GIẢI MÃ TỪ KHÓA TỐI THƯỢNG";
+        contentEl.innerHTML = `
+          <div class="content-box" style="border-color: #f59e0b; background: #fffbeb;">
+            <div style="font-size: 1.05rem; font-weight: 900; color: #b45309; margin-bottom: 8px;">
+              🎉 ĐÃ GOM ĐỦ 8 MẢNH CHỮ CÁI!
+            </div>
+            Quan sát khay mảnh chữ cái màu vàng bên dưới và ghép thành <b>TỪ KHÓA TỐI THƯỢNG (gồm 2 từ)</b> để về đích:
+            <input type="text" id="final-code" placeholder="Nhập từ khóa 2 từ tại đây..." style="width: 100%; margin-top: 12px; font-size: 1.05rem; text-align: center;">
           </div>
-        </div>
-
-        <div class="content-box">
-          <b>2. Sắp xếp 8 mảnh ký tự ở ô vàng thành TỪ KHÓA TỐI THƯỢNG:</b><br>
-          <input type="text" id="final-code" placeholder="Nhập từ khóa 2 từ..." style="width: 100%; margin-top: 8px;">
-        </div>
-      `;
+        `;
+      }
     }
   }
 
@@ -703,13 +703,14 @@
 
       if (isMatchValid && isWordValid) {
         correctCount++;
-        playCorrectSound(); // Phát âm thanh đúng
+        playCorrectSound();
+        // Nhận 3 chữ cái đầu tiên
         passStage(["D", "N", "I"], 10);
       } else {
         wrongCount++;
-        playWrongSound(); // Phát âm thanh sai
+        playWrongSound();
         feedback.className = "msg-feedback wrong";
-        feedback.innerText = "Chưa chính xác! Hãy kiểm tra lại phần ghép nối hoặc tên cơ chế.";
+        feedback.innerText = "Chưa chính xác! Hãy kiểm tra lại phần ghép nối hoặc tên quy luật cơ chế.";
       }
     }
     else if (currentStage === 2) {
@@ -720,35 +721,57 @@
       }
       if (selectedOrder.join("") === "CBDAE") {
         correctCount++;
-        playCorrectSound(); // Phát âm thanh đúng
+        playCorrectSound();
+        // Nhận thêm 3 chữ cái tiếp theo (tổng là 6 chữ cái, chưa đủ 8 chữ)
         passStage(["H", "E", "M"], 10);
       } else {
         wrongCount++;
-        playWrongSound(); // Phát âm thanh sai
+        playWrongSound();
         feedback.className = "msg-feedback wrong";
-        feedback.innerText = "Trình tự chưa đúng! Hãy bấm xem sơ đồ để kiểm tra lại thứ tự các bước.";
+        feedback.innerText = "Trình tự chưa đúng! Hãy bấm xem sơ đồ kính hiển vi để kiểm tra lại.";
       }
     }
     else if (currentStage === 3) {
-      const b1 = document.getElementById("b1").innerText;
-      const b2 = document.getElementById("b2").innerText;
-      const b3 = document.getElementById("b3").innerText;
-      const finalCode = document.getElementById("final-code").value.trim().toUpperCase();
+      if (!stage3VaccinePassed) {
+        // Kiểm tra điền từ định nghĩa vaccine
+        const b1 = document.getElementById("b1").innerText;
+        const b2 = document.getElementById("b2").innerText;
+        const b3 = document.getElementById("b3").innerText;
 
-      const isBlanksValid = (b1 === "kháng nguyên" && 
-        ((b2 === "suy yếu" && b3 === "bất hoạt") || (b2 === "bất hoạt" && b3 === "suy yếu")));
-      const isCodeValid = (finalCode === "MIỄN DỊCH" || finalCode === "MIEN DICH");
+        const isBlanksValid = (b1 === "kháng nguyên" && 
+          ((b2 === "suy yếu" && b3 === "bất hoạt") || (b2 === "bất hoạt" && b3 === "suy yếu")));
 
-      if (isBlanksValid && isCodeValid) {
-        correctCount++;
-        score += 10;
-        playCelebrationSound(); // Phát chuỗi âm thanh Pháo nổ + Vỗ tay
-        finishGame();
+        if (isBlanksValid) {
+          correctCount++;
+          playCorrectSound();
+          // Mở khóa nốt 2 mảnh chữ cái cuối cùng C và I (LÚC NÀY MỚI ĐỦ 8 MẢNH)
+          collectedLetters = collectedLetters.concat(["C", "I"]);
+          document.getElementById("collected-badges").innerHTML = collectedLetters.map(l => `<span class="letter-chip">${l}</span>`).join(" ");
+          
+          stage3VaccinePassed = true;
+          feedback.className = "msg-feedback correct";
+          feedback.innerText = "Chính xác! Bạn đã mở khóa trọn vẹn 8 mảnh chữ cái bí mật!";
+          setTimeout(renderStage, 700);
+        } else {
+          wrongCount++;
+          playWrongSound();
+          feedback.className = "msg-feedback wrong";
+          feedback.innerText = "Các từ điền vào định nghĩa vaccine chưa chuẩn xác!";
+        }
       } else {
-        wrongCount++;
-        playWrongSound(); // Phát âm thanh sai
-        feedback.className = "msg-feedback wrong";
-        feedback.innerText = "Từ điền vào định nghĩa hoặc từ khóa sắp xếp cuối cùng chưa chính xác!";
+        // Kiểm tra từ khóa tối thượng
+        const finalCode = document.getElementById("final-code").value.trim().toUpperCase();
+        if (finalCode === "MIỄN DỊCH" || finalCode === "MIEN DICH") {
+          correctCount++;
+          score += 10;
+          playCelebrationSound(); // Phát kèn chiến thắng + tiếng vỗ tay ròn rã
+          finishGame();
+        } else {
+          wrongCount++;
+          playWrongSound();
+          feedback.className = "msg-feedback wrong";
+          feedback.innerText = "Từ khóa giải mã chưa chính xác! Gợi ý: Đây là tên chủ đề bài học hôm nay.";
+        }
       }
     }
   }
