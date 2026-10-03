@@ -125,6 +125,14 @@
     .msg-feedback.correct { color: #10b981; }
     .msg-feedback.wrong { color: #ef4444; }
 
+    .btn-preview-img {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #0f172a; border: 2px solid #3b82f6; color: #60a5fa;
+      font-weight: 800; padding: 10px 14px; border-radius: 16px;
+      cursor: pointer; margin-bottom: 12px; font-size: 0.95rem; transition: 0.15s;
+    }
+    .btn-preview-img:hover { background: #1e293b; }
+
     /* Màn hình tổng kết */
     .finish-icon-wrapper {
       width: 72px; height: 72px; background: #fef9c3; border-radius: 50%;
@@ -161,16 +169,14 @@
     }
     .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* =========================================================
-       POPUP BẢNG XẾP HẠNG ĐẸP NHƯ HÌNH MINH HỌA
-       ========================================================= */
+    /* Modals */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
       display: none; justify-content: center; align-items: center; z-index: 100;
       padding: 16px;
     }
-    .lb-card {
+    .modal-content-card {
       background: #ffffff; max-width: 600px; width: 100%; border-radius: 28px;
       border: 4px solid #f59e0b; box-shadow: 0 20px 40px rgba(0,0,0,0.25);
       overflow: hidden; animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -179,40 +185,23 @@
       from { transform: scale(0.85); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
-    .lb-header {
-      background: #f59e0b; color: white; padding: 16px 20px;
-      position: relative;
+    .modal-head {
+      background: #f59e0b; color: white; padding: 14px 20px; position: relative;
     }
-    .lb-header h3 { font-size: 1.35rem; display: flex; align-items: center; gap: 8px; text-align: left; }
-    .lb-sub { font-size: 0.8rem; font-weight: 700; opacity: 0.95; margin-top: 4px; }
-    .lb-close-btn {
-      position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.25);
+    .modal-head h3 { font-size: 1.25rem; text-align: left; }
+    .btn-close-modal {
+      position: absolute; top: 12px; right: 14px; background: rgba(255,255,255,0.25);
       border: none; color: white; width: 32px; height: 32px; border-radius: 50%;
       font-size: 1.1rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    .lb-close-btn:hover { background: rgba(255,255,255,0.4); }
+    .btn-close-modal:hover { background: rgba(255,255,255,0.4); }
 
-    .lb-body { padding: 16px 20px; max-height: 55vh; overflow-y: auto; }
-    
     .lb-table { width: 100%; border-collapse: collapse; text-align: center; }
     .lb-table thead { background: #f8fafc; color: #64748b; font-size: 0.82rem; font-weight: 800; }
     .lb-table th { padding: 10px 6px; border-bottom: 2px solid #e2e8f0; }
     .lb-table td { padding: 12px 6px; font-weight: 800; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
     .lb-table tr:hover { background: #fefce8; }
-
     .rank-medal { font-size: 1.3rem; }
-    .lb-footer {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 20px; background: #fffbeb; border-top: 2px solid #fef3c7;
-    }
-    .btn-admin {
-      background: none; border: none; font-family: 'Nunito', sans-serif;
-      font-weight: 800; color: #b45309; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.88rem;
-    }
-    .btn-close-bottom {
-      background: #f59e0b; color: white; border: none; font-family: 'Nunito', sans-serif;
-      font-weight: 900; padding: 8px 24px; border-radius: 12px; cursor: pointer; font-size: 0.95rem;
-    }
   </style>
 </head>
 <body>
@@ -269,7 +258,7 @@
       </div>
       <div class="stats-row">
         <span>⭐ Tổng điểm:</span>
-        <span class="stat-val-highlight"><span id="final-score">30</span> điểm</span>
+        <span class="stat-val-highlight"><span id="final-score">30</span> / 30 điểm</span>
       </div>
       <div class="stats-row">
         <span>⏱ Tổng thời gian hoàn thành:</span>
@@ -279,7 +268,7 @@
 
     <div class="two-cols">
       <div class="mini-stat-card card-green">
-        <div>☑️️ Số lần giải đúng</div>
+        <div>☑ Số lần giải đúng</div>
         <div class="mini-stat-num" id="stat-correct">3</div>
       </div>
       <div class="mini-stat-card card-pink">
@@ -300,16 +289,35 @@
   </div>
 </div>
 
-<!-- ================= POPUP BẢNG XẾP HẠNG ================= -->
+<!-- POPUP PHÓNG TO SƠ ĐỒ KÍNH HIỂN VI (MẬT THƯ 2) -->
+<div class="modal-overlay" id="image-modal" onclick="hideImageModal()">
+  <div class="modal-content-card" style="border-color: #3b82f6; max-width: 620px; background: #0b1329;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background: #1e3a8a;">
+      <button class="btn-close-modal" onclick="hideImageModal()">✕</button>
+      <h3>🔬 KÍNH HIỂN VI: GIẢI MÃ DÒNG ĐỜI MIỄN DỊCH</h3>
+    </div>
+    <div style="padding: 16px; text-align: center; background: #000000;">
+      <img src="so-do-bi-an.jpg" alt="Sơ đồ cơ chế miễn dịch bí ẩn" style="max-width: 100%; height: auto; max-height: 60vh; border-radius: 12px; object-fit: contain;">
+      <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px; font-weight: 700;">
+        💡 Gợi ý: Quan sát kỹ hình dạng vi khuẩn, tế bào lympho B hoạt hóa, tế bào nhớ và tương bào tiết kháng thể.
+      </div>
+    </div>
+    <div style="padding: 10px 16px; background: #0f172a; text-align: right; border-top: 1px solid #1e293b;">
+      <button class="btn-3d btn-blue" onclick="hideImageModal()" style="width: auto; padding: 8px 24px; font-size: 0.95rem; margin: 0 auto;">ĐÓNG KÍNH HIỂN VI</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP BẢNG XẾP HẠNG -->
 <div class="modal-overlay" id="leaderboard-modal">
-  <div class="lb-card">
-    <div class="lb-header">
-      <button class="lb-close-btn" onclick="hideLeaderboard()">✕</button>
+  <div class="modal-content-card">
+    <div class="modal-head">
+      <button class="btn-close-modal" onclick="hideLeaderboard()">✕</button>
       <h3>🏆 BẢNG XẾP HẠNG</h3>
-      <div class="lb-sub">Ưu tiên: Điểm cao nhất ➔ Thời gian ngắn nhất ➔ Hoàn thành sớm nhất</div>
+      <div style="font-size: 0.8rem; opacity: 0.95; margin-top: 4px;">Ưu tiên: Điểm cao nhất ➔ Thời gian ngắn nhất ➔ Hoàn thành sớm nhất</div>
     </div>
 
-    <div class="lb-body">
+    <div style="padding: 16px 20px; max-height: 55vh; overflow-y: auto;">
       <table class="lb-table">
         <thead>
           <tr>
@@ -326,19 +334,129 @@
       </table>
     </div>
 
-    <div class="lb-footer">
-      <button class="btn-admin" onclick="openAdminSheet()">🔒 Quản lý bảng xếp hạng (Giáo viên)</button>
-      <button class="btn-close-bottom" onclick="hideLeaderboard()">ĐÓNG</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: #fffbeb; border-top: 2px solid #fef3c7;">
+      <button onclick="openAdminSheet()" style="background: none; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; color: #b45309; cursor: pointer;">🔒 Quản lý bảng xếp hạng (Giáo viên)</button>
+      <button onclick="hideLeaderboard()" style="background: #f59e0b; color: white; border: none; font-family: 'Nunito', sans-serif; font-weight: 900; padding: 8px 24px; border-radius: 12px; cursor: pointer;">ĐÓNG</button>
     </div>
   </div>
 </div>
 
 <script>
-  // DÁN LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6dDR1hNiD47qySiZHE_pNHWTJ0m3xii2f65naP05qyqgHHHIy9QlQivFBd5LfxqFLMg/exec";
-  // Link mở Google Sheets khi giáo viên bấm "Quản lý bảng xếp hạng":
+  // ================= CẤU HÌNH LIÊN KẾT =================
+  const SCRIPT_URL = "URL_APPS_SCRIPT_CUA_BAN";
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit";
 
+  // ================= HỆ THỐNG ÂM THANH TỰ ĐỘNG (WEB AUDIO API) =================
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // Tiếng Ting Ting khi giải đúng từng mật thư
+  function playCorrectSound() {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.08);
+      gain.gain.setValueAtTime(0.15, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.3);
+    });
+  }
+
+  // Tiếng Buzz nhẹ khi làm sai
+  function playWrongSound() {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.linearRampToValueAtTime(100, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  // Tiếng Pháo Nổ + Tiếng Vỗ Tay chúc mừng khi về đích!
+  function playCelebrationSound() {
+    const ctx = getAudioContext();
+    
+    // 1. Chuỗi pháo nổ "Pằng... Tách... Bùm!"
+    for (let i = 0; i < 6; i++) {
+      const delay = i * 0.35 + Math.random() * 0.15;
+      setTimeout(() => {
+        const now = ctx.currentTime;
+        const bufferSize = ctx.sampleRate * 0.25;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < bufferSize; j++) {
+          data[j] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+      }, delay * 1000);
+    }
+
+    // 2. Tiếng Vỗ Tay rào rào (Clapping sound effect)
+    for (let c = 0; c < 28; c++) {
+      const clapDelay = 0.2 + Math.random() * 2.2;
+      setTimeout(() => {
+        const now = ctx.currentTime;
+        const bufferSize = ctx.sampleRate * 0.05;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < bufferSize; j++) {
+          data[j] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1100 + Math.random() * 400, now);
+        filter.Q.value = 3.0;
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+      }, clapDelay * 1000);
+    }
+  }
+
+  // ================= BIẾN TOÀN CỤC TRÒ CHƠI =================
   let currentStage = 1;
   let teamName = "";
   let score = 0;
@@ -360,6 +478,8 @@
   function startGame() {
     teamName = document.getElementById("team-name").value.trim();
     if (!teamName) return alert("Vui lòng nhập tên nhóm của bạn!");
+
+    getAudioContext(); // Khởi tạo âm thanh từ tương tác người dùng
 
     document.getElementById("start-screen").style.display = "none";
     document.getElementById("game-screen").style.display = "block";
@@ -422,7 +542,28 @@
         </div>
 
         <div class="content-box">
-          <b>2. Quy luật tương tác (Điền từ):</b><br>
+          <b>2. Quy luật tương tác:</b><br>
+          <div style="text-align: center; margin: 10px 0;">
+            <svg viewBox="0 0 460 150" style="max-width: 100%; height: auto; max-height: 140px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; padding: 4px;">
+              <path d="M 40,75 L 85,75 L 115,50 L 125,58 L 98,82 L 125,106 L 115,114 L 85,89 L 40,89 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+              <polygon points="125,58 138,54 134,67" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+              <circle cx="180" cy="82" r="38" fill="#f43f5e" stroke="#be123c" stroke-width="2"/>
+              <polygon points="144,82 154,73 154,91" fill="#ffffff" stroke="#be123c" stroke-width="2"/>
+              <text x="75" y="32" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#dc2626">Kháng thể A</text>
+              <text x="180" y="80" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
+              <text x="180" y="94" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN A</text>
+
+              <path d="M 270,75 L 315,75 L 345,50 L 355,58 L 328,82 L 355,106 L 345,114 L 315,89 L 270,89 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+              <path d="M 355,58 A 6,6 0 1,1 362,50" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+              <circle cx="410" cy="82" r="38" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+              <circle cx="374" cy="82" r="8" fill="#ffffff" stroke="#0369a1" stroke-width="2"/>
+              <text x="305" y="32" font-family="'Nunito', sans-serif" font-weight="800" font-size="13" fill="#2563eb">Kháng thể B</text>
+              <text x="412" y="80" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">KHÁNG</text>
+              <text x="412" y="94" font-family="'Nunito', sans-serif" font-weight="900" font-size="11" fill="#ffffff" text-anchor="middle">NGUYÊN B</text>
+              
+              <text x="230" y="142" font-family="'Nunito', sans-serif" font-style="italic" font-weight="700" font-size="12" fill="#64748b" text-anchor="middle">Cơ chế đặc hiệu: Chìa khóa - Ổ khóa</text>
+            </svg>
+          </div>
           Kháng nguyên liên kết đặc hiệu với kháng thể theo cơ chế 
           <input type="text" id="m1-word" placeholder="tên cơ chế..." style="display:inline-block; width: 200px; margin: 4px 0;">.
         </div>
@@ -430,9 +571,13 @@
     } 
     else if (currentStage === 2) {
       selectedOrder = [];
-      titleEl.innerText = "Mật thư 2: Cơ chế miễn dịch Hình 33.3 (10 điểm)";
+      titleEl.innerText = "Mật thư 2: Sơ đồ dòng đời miễn dịch (10 điểm)";
       contentEl.innerHTML = `
         <div class="content-box">
+          <button class="btn-preview-img" onclick="showImageModal()">
+            🔬 Chạm mở Kính hiển vi quan sát Sơ đồ dòng đời (Phóng to)
+          </button>
+
           <b>Chạm chọn lần lượt theo trình tự phản ứng miễn dịch từ 1 đến 5:</b>
           <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">(Chạm vào ô số phía trên nếu muốn chọn lại)</div>
           
@@ -459,6 +604,10 @@
       titleEl.innerText = "Mật thư 3: Lá chắn Vaccine & Từ khóa (10 điểm)";
       contentEl.innerHTML = `
         <div class="content-box">
+          <div style="text-align: center; margin-bottom: 12px;">
+            <img src="vaccine-cute.png" alt="Lá chắn Vaccine" style="max-width: 100%; height: auto; max-height: 140px; border-radius: 16px; object-fit: contain; background: #fff; padding: 4px; border: 2px solid #fed7aa; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);">
+          </div>
+
           <b>1. Điền từ thích hợp vào định nghĩa vaccine:</b><br>
           <i>(Chạm từ ở kho từ bên dưới để điền, chạm ô trống để bỏ chọn)</i><br><br>
           Vaccine là chế phẩm chứa một lượng rất nhỏ <span class="blank-drop" id="b1" onclick="clearBlank('b1')">...</span> 
@@ -554,9 +703,11 @@
 
       if (isMatchValid && isWordValid) {
         correctCount++;
+        playCorrectSound(); // Phát âm thanh đúng
         passStage(["D", "N", "I"], 10);
       } else {
         wrongCount++;
+        playWrongSound(); // Phát âm thanh sai
         feedback.className = "msg-feedback wrong";
         feedback.innerText = "Chưa chính xác! Hãy kiểm tra lại phần ghép nối hoặc tên cơ chế.";
       }
@@ -569,11 +720,13 @@
       }
       if (selectedOrder.join("") === "CBDAE") {
         correctCount++;
+        playCorrectSound(); // Phát âm thanh đúng
         passStage(["H", "E", "M"], 10);
       } else {
         wrongCount++;
+        playWrongSound(); // Phát âm thanh sai
         feedback.className = "msg-feedback wrong";
-        feedback.innerText = "Trình tự chưa đúng! Hãy chú ý bước lympho B phân chia thành tương bào và tế bào nhớ.";
+        feedback.innerText = "Trình tự chưa đúng! Hãy bấm xem sơ đồ để kiểm tra lại thứ tự các bước.";
       }
     }
     else if (currentStage === 3) {
@@ -589,9 +742,11 @@
       if (isBlanksValid && isCodeValid) {
         correctCount++;
         score += 10;
+        playCelebrationSound(); // Phát chuỗi âm thanh Pháo nổ + Vỗ tay
         finishGame();
       } else {
         wrongCount++;
+        playWrongSound(); // Phát âm thanh sai
         feedback.className = "msg-feedback wrong";
         feedback.innerText = "Từ điền vào định nghĩa hoặc từ khóa sắp xếp cuối cùng chưa chính xác!";
       }
@@ -624,7 +779,6 @@
 
     startConfetti();
 
-    // Gửi điểm số về Google Sheets
     if (SCRIPT_URL && SCRIPT_URL !== "URL_APPS_SCRIPT_CUA_BAN") {
       fetch(SCRIPT_URL, {
         method: "POST",
@@ -639,12 +793,17 @@
     location.reload();
   }
 
-  // ================= BẢNG XẾP HẠNG POPUP =================
+  function showImageModal() {
+    document.getElementById("image-modal").style.display = "flex";
+  }
+  function hideImageModal() {
+    document.getElementById("image-modal").style.display = "none";
+  }
+
   function showLeaderboard() {
     document.getElementById("leaderboard-modal").style.display = "flex";
     loadLeaderboardData();
   }
-
   function hideLeaderboard() {
     document.getElementById("leaderboard-modal").style.display = "none";
   }
@@ -659,7 +818,7 @@
     const tbody = document.getElementById("leaderboard-data");
     tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; color: #94a3b8;">Đang cập nhật bảng xếp hạng...</td></tr>`;
 
-    if (!SCRIPT_URL || SCRIPT_URL === "URL_APPS_SCRIPT_CUA_BAN") {
+    if (!SCRIPT_URL || SCRIPT_URL === "https://script.google.com/macros/s/AKfycbz6dDR1hNiD47qySiZHE_pNHWTJ0m3xii2f65naP05qyqgHHHIy9QlQivFBd5LfxqFLMg/exec") {
       tbody.innerHTML = `
         <tr>
           <td><span class="rank-medal">🥇</span></td>
@@ -715,7 +874,6 @@
     }
   }
 
-  // ================= HIỆU ỨNG PHÁO HOA CONFETTI =================
   function startConfetti() {
     const canvas = document.getElementById("confetti-canvas");
     const ctx = canvas.getContext("2d");
